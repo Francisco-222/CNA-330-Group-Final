@@ -1,115 +1,56 @@
+# Final group Project
+# CNA 330
+# Teacher: Justin Elis
+# NBA data will show important information such as the age weight and salary information accourding to the names of players and positions
+#Group members: Francisco Espino, TJ, Ahmend
+
 import pandas as pd
-from sqlalchemy import create_engine
-import pymysql
 import numpy as np
-import pandas as pd
+from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
-import json
-import mysql.connector
 
-def fetch_data(site):
-   #based on code from Job Hunter
-   jsonpage = 0
-   try:
-      contents = urllib.request.urlopen(site)
-      response = contents.reat()
-      jsonpage = json.loads(response)
-   except:
-      pass
-   return jsonpage
 
-def connect_to_sql():
-   #based on code from Job hunter
-   connection = mysql.connector.connect(user='root', password='',
-                                  host='127.0.0.1',
-                                  database='cna330')
-   return connection
 
-def create_tables(cursor):
-   # Based on code from Job Hunter
-   ## TODO: CHANGE table created here to suit incoming data
-   create = ('''CREATE TABLE IF NOT EXISTS sports (id INT PRIMARY KEY auto_increment,"
-                        "type varchar(10), title varchar(100), description TEXT CHARSET wtf8, job_id varchar(40),"
-                        "created_at DATE, company varchar(100), location varchar(50),"
-                        "how_to_apply varchar(1000));''')
-   cursor.execute(create)
-   return
 
-def query_sql(cursor, query):
-   # Based on code from Job Hunter
-   cursor.execute(query)
-   return cursor
+data = "https://raw.githubusercontent.com/Francisco-222/SQL-FINAL/main/nba%20players.csv" # This line will take the csv info from the github website, info which is according to the csv
+ # I mean imports the data from nba players
 
-def check_table_for_data(new_data):
-   # Based on code from Job Hunter
-   # probably something like check_if_job_exists function from Job Hunter
-   ## TODO: make this function check the table to see if data is repeated
 
-def update_table(cursor, data):
-   # Based on code from Job Hunter
-   check = check_table_for_data(data)
-   if check == True:
-      return
-   else:
-      ## TODO: change the data headers below to fit incoming data from CSV and table
-      type = jobdetails['type']
-      title = jobdetails['title']
-      description = jobdetails['description']
-      job_id = jobdetails['id']
-      created_at = time.strptime(jobdetails['created_at'], "%a %b %c %H:%M:%S %Z %Y")
-      company = jobdetails['company']
-      location = jobdetails['location']
-      how_to_apply = jobdetails['how_to_apply']
-      query = ("INSERT INTO sports (type, title, description, job_id, created_at, company, location, how_to_apply)"
-            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s,)"
-            (type, title, description, job_id, created_at, company, location, how_to_apply))
-      return query_sql(cursor, query)
+# The code below will print the columns
+data=pd.read_csv(data)
+print(data.columns)   # prints all columns from nba players
+data = data.dropna()   # remove unnecessary lines
+data = data.where(pd.notnull(data), None)     # removes the lines which are empty
 
-def fetch_table(cursor):
-   # Based on code from Job Hunter
-   ## TODO: finish query to collect the columns from the table
-   query = ('''SELECT FROM sports WHERE ##____##''')
-   return query_sql(cursor, query)
 
-########
-def francisco_code_untouched():
-   # Connect to database
-   # You may need to edit the connect function based on your local settings.
-   #This Can connect to local .csv file or website from github
-   data = "https://raw.githubusercontent.com/Francisco-222/SQL-FINAL/main/nba%20players.csv"
-   # data =  connect from pd.read_csv("nba players.csv")
-   #Prints columns and cleans up empty lines
-   data=pd.read_csv(data)
-   print(data.columns)    # prints columns from csv
-   data = data.dropna()     # delete all empty lines
-   data = data.where(pd.notnull(data), None)     # Aldf'so delete the empty lines
-   ##you can google to run panda as console
-   ##### PLot #### will show the avarages of age and weight of NBA players
-   df = pd.read_csv("C:\\Users\\Francisco\\Desktop\\nba players.csv") #change for you path location
-   subjects = ['Age', 'Weight', ]
-   dataset = df.groupby('Position')[subjects].mean()
-   indx = np.arange(len(subjects))
-   score_label = np.arange(50, 300, 50)
-   PG_means = list(dataset.T['PG'])
-   SF_means = list(dataset.T['SF'])
-   bar_width = 0.35
-   fig, ax = plt.subplots()
-   barPG = ax.bar(indx - bar_width/2, PG_means, bar_width, label='PG_means')
-   barSF = ax.bar(indx + bar_width/2, SF_means , bar_width, label='SF_means')
-   # inserting x axis label
-   ax.set_xticks(indx)
-   ax.set_xticklabels(subjects)
-   # inserting y axis label
-   ax.set_yticks(score_label)
-   ax.set_yticklabels(score_label)
-   # inserting legend
-   ax.legend()
-   insert_data_labels(barPG)
-   insert_data_labels(barSF)
-   plt.show()
-   
+##### The code below will create connection with webmin
+
+
+sql_engine = create_engine('mysql+pymysql://root:@127.0.0.1:3306/nba_finalsql') #sql_engine will help to connect with the nba_sql database
+database_conn = sql_engine.connect()  # help to connect with the db
+data.to_sql('nba players', con=database_conn, if_exists='replace', index=False)     # This will allow to export the csv data into the db webmin
+
+##### PLot #### will show the avarages of age and weight of NBA players
+
+subjects = ['Age', 'Weight', ] #    Will going to show the average between age and weight; However we can use any subjects from csv just we need to change info inside of []
+dataset = data.groupby('Position')[subjects].mean() # Will are combinate the subject with position
+indx = np.arange(len(subjects))
+score_label = np.arange(50, 300, 50) # number represent label size
+PG_means = list(dataset.T['PG']) # In this case we pick only two position which is PG and SF, remember we can use any position for the plot
+SF_means = list(dataset.T['SF']) # second position that I pick for the plot
+bar_width = 0.35 # represent the width size
+fig, ax = plt.subplots()  # use the variable ax to create the subplots
+barPG = ax.bar(indx - bar_width/2, PG_means, bar_width, label='PG_means')  # will print the subplot means
+barSF = ax.bar(indx + bar_width/2, SF_means , bar_width, label='SF_means') # will print the subplot means
+# Both below inserting x axis label
+ax.set_xticks(indx)
+ax.set_xticklabels(subjects)
+# Both below inserting y axis label
+ax.set_yticks(score_label)
+ax.set_yticklabels(score_label)
+# All code below inserting legend, mean insert the ax and y values
+ax.legend()
 def insert_data_labels(bars):
-   # a function used in francisco's code above
    for bar in bars:
       bar_height = bar.get_height()
       ax.annotate('{0:.0f}'.format(bar.get_height()),
@@ -117,28 +58,40 @@ def insert_data_labels(bars):
          xytext=(0, 3),
          textcoords='offset points',
          ha='center',
-         va='bottom'    
-#######
+         va='bottom'
+      )
 
-def make_plot(incoming):
-   #Based on code from 10 min to Pandas               
-   data = incoming.cumsum()
-   data.figure()
-   df.plt()
-   plt.legend(loc=best)
 
-def group_final():
-   #function calls here:
-   ## TODO: fetch function
-   data = fetch_data(#!# -change to data web location- #!#)
-   conn = connect_to_sql()
-   cursor = conn.cursor()
-   create_tables(cursor)
-   update_table(cursor, data)
-   cols = fetch_table(cursor)
-   ## TODO: wrap rest of code into functions and call them here
-   #!# save make_plot for end #!#
-   make_plot(cols)    
+# Code of below will print the bar data from csv
+insert_data_labels(barPG)
+insert_data_labels(barSF)
+plt.show()
 
-if __name__ == '__main__':
-   group_final()
+#Code By Francisco E
+
+#----------------------------------------------------------------------------------------------#
+### To read pandas on console ###
+
+# for weight, Number, Weight >>  data.tail()
+# specify output of rows >> data[['Name', 'Team', 'Number']].head(3)
+# for output the number of columns >> data.head(place the number here)
+# output the players values >> data.values
+# range index mean which is the last row stop      >>data.index
+# output the number of colums and rows >> data.shape
+# output the data types for each column >> data.dtypes
+# output for the data colums >> data.columns
+# output the index and colunm >> data.axes
+# output the data csv information >> data.info()
+#----------------------------------------------------------------------------------------------------#
+## SOURCES ##
+# Here I found the csv data and also some part of the pandas code:       https://www.geeksforgeeks.org/different-ways-to-import-csv-file-in-pandas/
+
+# This source was especially helpful for the line number 23:              https://docs.sqlalchemy.org/en/13/core/engines.html
+
+# It helped me to classify some doubts about db connection:               https://stackoverflow.com/questions/29355674/how-to-connect-mysql-database-using-pythonsqlalchemy-remotely
+
+# Help for dataframe pandas:                                              https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.dropna.html
+
+# Video was helpful for plot                                               https://www.youtube.com/watch?v=a-im0rYzXJA&t=298s&ab_channel=JieJenn
+
+# Documanation for plot too                                                https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.axes.Axes.bar.html
